@@ -8,6 +8,32 @@ import os
        
 @dataclass
 class DVC_Parameters:
+
+    """
+    This class will generate an data object containing the parameters for DVC. The default values are:
+
+    INPUTS
+
+    analysis:str = 'correlation', 
+    ref_im:str = 'ref_im.raw', 
+    def_im:str = 'def_im.raw',
+    res_file:str = 'out.res', 
+    roi:list = [0, -1, 0, -1, 0, -1], 
+    pixel_size:float = 1.0,
+    restart:int =0,
+    convergence_limit:float = 1.0e-4, 
+    iter_max:int = 30,
+    regularization_type:str = 'tiko', 
+    regularization_param:int =16, 
+    psample:int = 1,
+    image_size:list = []
+
+    OUTPUT
+
+    Data object with DVC parameters.
+
+    """
+
     def __init__(self, 
                 analysis:str = 'correlation', 
                 ref_im:str = 'ref_im.raw', 
@@ -36,13 +62,21 @@ class DVC_Parameters:
         self.regularization_param = regularization_param
         self.psample = psample
 
+        # checks if the extension provided for the reference image is RAW and argues about the shape of the image
         if self.reference_image.split('.')[-1] == 'raw':
-            if image_size == ():
+            if image_size == []:
                 print(Warning('You will need the size of the raw images to run DVC!!'))
             
             self.image_size = image_size
 
     def __str__(self):
+
+        """
+        This dunder method changes the behavior of the output for the class when 'print(DVC_Parameters)' is called.
+
+        Returns:
+            _type_: _description_
+        """
         string = ("-------------PARAMETERS--------------- \n"+
         f"Analysis: {self.analysis} \n" +
         f"Reference image: {self.reference_image} \n" + 
@@ -60,16 +94,31 @@ class DVC_Parameters:
 
 @dataclass
 class DVC_Model:
+
+    """
+    This class will generate the model data object. The default values are:
+
+    INPUTS
+    basis:str = 'fem',
+    nscale:int = 3,
+    mesh_size:list = (16, 16, 16))
+
+    """
     def __init__(self,
                 basis:str = 'fem',
                 nscale:int = 3,
-                mesh_size:tuple = (16, 16, 16)):
+                mesh_size:list = [16, 16, 16]):
 
         self.basis = basis
         self.nscale = nscale
         self.mesh_size = mesh_size
 
     def __str__(self):
+    
+        """
+            This dunder method changes the behavior of the output for the class when 'print(DVC_Parameters)' is called.
+
+        """
 
         string = ("----------------MODEL----------------- \n"+
                  f'Basis function: {self.basis} \n' +
@@ -78,6 +127,20 @@ class DVC_Model:
         return string
 
 class DVC_H5_Writer(DVC_Parameters, DVC_Model):
+
+    """
+    This subclass will inherit from DVC_Parameters and DVC_Model data classes and will configure the exporting of the H5 file.
+
+    If the previously created parameters and model objects are not passed as inputs, the class will create the objects automatically with the default values of each of the classes.
+
+    INPUTS
+
+    parameters:DVC_Parameters = DVC_Parameters(),
+    model:DVC_Model = DVC_Model(),
+    h5filename:str = './DVC_Settings.h5'
+
+
+    """
     def __init__(self,
                 parameters:DVC_Parameters = DVC_Parameters(),
                 model:DVC_Model = DVC_Model(),
@@ -107,50 +170,56 @@ class DVC_H5_Writer(DVC_Parameters, DVC_Model):
 
     def write_h5file(self):
 
+        """
+        
+        Checks if h5 file already exists and ask for confirmation on the decision of overwriting it, otherwise it will just write it. 
+
+        """
+
         if os.path.exists(self.filename):
 
             answer = input('There is a file with the name you asked for. Do you want to overwrite it? (y/n)').lower()
             
             if answer == 'y':
-                with h5py.File(name=self.filename, mode='w') as h5file:
-                    h5file.create_group(name='/param')
-                    h5file.create_group(name='/model')
 
-                    # h5file['/param/analysis'] = self.analysis
-                    # h5file['/param/reference_image'] = self.reference_image
+                self._fill_h5file()
+                print('I wrote the file!')
 
-                    h5file.create_dataset(name='/param/analysis', data=self.analysis)
-                    h5file.create_dataset(name='/model/basis', data=self.basis)
+        else:
 
-                    # h5file['/model/basis'] = self.basis
-        
-   
+            self._fill_h5file()
+            print('I wrote the file!')
+    
+    
+    
+    def _fill_h5file(self):
 
+        """
+        Fills the h5 file with the data.
+        """
+    
+        with h5py.File(name=self.filename, mode='w') as h5file:
+            h5file.create_group(name='/param')
+            h5file.create_group(name='/model')
 
+            # write the parameters
+            h5file.create_dataset(name='/param/analysis', data=self.analysis)
+            h5file.create_dataset(name='/param/reference_image', data=self.reference_image)
+            h5file.create_dataset(name='/param/deformed_image', data=self.deformed_image)
+            h5file.create_dataset(name='/param/result_file', data=self.result_file)
+            h5file.create_dataset(name='/param/roi', data=self.roi)
+            h5file.create_dataset(name='/param/pixel_size', data=self.pixel_size)
+            h5file.create_dataset(name='/param/restart', data=self.restart)
+            h5file.create_dataset(name='/param/conv_lim', data=self.conv_lim)
+            h5file.create_dataset(name='/param/iter_max', data=self.iter_max)
+            h5file.create_dataset(name='/param/regularization_param', data=self.regularization_param)
+            h5file.create_dataset(name='/param/regularization_type', data=self.regularization_type)
+            h5file.create_dataset(name='/param/psample', data=self.psample)
 
-
-
-
-
-
-
-
-
-
-        
-        
+            # write the model datasets
+            h5file.create_dataset(name='/model/basis', data=self.basis)
+            h5file.create_dataset(name='/model/nscale', data=self.nscale)
+            h5file.create_dataset(name='/model/mesh_size', data=self.mesh_size)
 
     
 
-if __name__ == '__main__':
-
-    param = DVC_Parameters(analysis='pedro')
-    model = DVC_Model()
-    # writer = DVC_H5_Writer(param, model).write_h5file(param, model)
-    writer = DVC_H5_Writer()
-
-
-    print(param)
-    print(model)
-    print()
-    print(writer.__dict__)
