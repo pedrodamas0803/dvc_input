@@ -26,7 +26,7 @@ param = DVC_Parameters(analysis='correlation',
 
 model = DVC_Model(basis='fem',
                   nscale=3,
-                  mesh_size=16)
+                  mesh_size=[16, 16, 16])
 
 # print the parameters and model variables on the console
 
@@ -36,19 +36,19 @@ print(model)
 
 # the parameters can be accessed and changed using the dot notation after the creation of the objects
 
-print('Initial analysis type \n')
-print(f'Analysis: {param.analysis}')
+# print('Initial analysis type \n')
+# print(f'Analysis: {param.analysis}')
 
-param.analysis = 'carrot_cake_rules'
-print('')
-print('New analysis type \n')
-print(f'Analysis: {param.analysis}')
+# param.analysis = 'carrot_cake_rules'
+# print('')
+# print('New analysis type \n')
+# print(f'Analysis: {param.analysis}')
 
 # initialize the writer object receiving the previously created objects
 
 writer = DVC_H5_Writer(parameters=param, 
                         model = model,
-                        h5filename='./DVC_Settings.h5')
+                        h5filename='/data/visitor/ihma244/id11/DVC_Analysis/DVC_Settings.h5')
 
 # write the H5 file on disk
 
